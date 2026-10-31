@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 关键：viewport 加 maximum-scale，防止 iOS 自动放大 -->
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,
+               user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>写字板 · 手机笔锋版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    /* 手机防滚动三板斧 */
+    position: fixed;
+    width: 100%;
+    top: 0; left: 0;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #fff;
+    color: #333;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;       /* 禁止长按弹出菜单（iOS） */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;                 /* 禁止所有默认触摸手势 */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #board {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: block;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  /* ---------- 工具栏（手机优先设计） ---------- */
+  .toolbar {
+    position: fixed;
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    max-width: calc(100vw - 12px);
+    background: rgba(255,255,255,.9);
+    -webkit-backdrop-filter: blur(18px) saturate(1.8);
+    backdrop-filter: blur(18px) saturate(1.8);
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 18px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.15);
+    z-index: 10;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+
+  .swatches { display: flex; align-items: center; gap: 6px; padding: 0 4px; }
+  .swatch {
+    width: 28px; height: 28px;          /* 手机上稍大一点 */
+    border-radius: 50%;
+    border: none; padding: 0;
+    cursor: pointer; flex: 0 0 auto;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+    transition: transform .1s ease;
+  }
+  .swatch:active { transform: scale(.9); }
+  .swatch.active {
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.1),
+                0 0 0 2px #fff, 0 0 0 4px #1a1a1a;
+  }
+
+  .sep { width: 1px; height: 22px; background: rgba(0,0,0,.1); margin: 0 3px; flex: 0 0 auto; }
+
+  .btn {
+    height: 40px;                        /* 触摸目标 ≥40px */
+    min-width: 40px;
+    padding: 0 12px;
+    border: none; border-radius: 10px;
+    background: transparent;
+    font-size: 14px; font-family: inherit;
+    color: #333; font-weight: 500;
+    cursor: pointer; flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { background: rgba(0,0,0,.08); }
+  .btn.active { background: #1a1a1a; color: #fff; }
+
+  .size-wrap { display: flex; align-items: center; gap: 6px; padding: 0 6px; flex: 0 0 auto; }
+  .size-label { font-size: 12px; color: #888; white-space: nowrap; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 76px; height: 30px;
+    background: transparent; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 2px; background: rgba(0,0,0,.12);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px; margin-top: -8px;
+    border-radius: 50%; background: #1a1a1a; border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  }
+
+  .hint {
+    position: fixed; left: 50%; top: calc(20px + env(safe-area-inset-top, 0px));
+    transform: translateX(-50%);
+    font-size: 13px; color: #9a9a9a;
+    white-space: nowrap; pointer-events: none;
+    transition: opacity .6s ease; z-index: 5;
+    padding: 8px 14px;
+    background: rgba(255,255,255,.7);
+    border-radius: 20px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .hint.hide { opacity: 0; }
+
+  /* 小屏手机（< 380px）精简显示 */
+  @media (max-width: 380px) {
+    .size-wrap .size-label { display: none; }
+    input[type=range] { width: 56px; }
+    .btn { padding: 0 10px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="board"></canvas>
+<div class="hint" id="hint">手指书写，快慢决定粗细</div>
+
+<div class="toolbar">
+  <div class="swatches" id="swatches"></div>
+  <div class="sep"></div>
+  <div class="size-wrap">
+    <span class="size-label">粗细</span>
+    <input type="range" id="size" min="1" max="40" step="1" value="9">
+  </div>
+  <div class="sep"></div>
+  <button class="btn active" id="penBtn">笔</button>
+  <button class="btn" id="eraserBtn">橡皮</button>
+  <div class="sep"></div>
+  <button class="btn" id="undoBtn">撤销</button>
+  <button class="btn" id="clearBtn">清空</button>
+  <button class="btn" id="saveBtn">保存</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const hint = document.getElementById('hint');
+
+  const state = { color: '#1a1a1a', size: 9, tool: 'pen' };
+
+  let strokes = [];
+  let currentStroke = null;
+  let drawing = false;
+  let activePointerId = null;      // 只跟踪一根手指
+  const activeTouches = new Set(); // 记录当前所有触点
+
+  /* ========== 尺寸 / 高清屏 ========== */
+  function resize() {
+    // 手机 dpr 很高，限制到 2.5 以内以节省性能
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2.5));
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // 用 CSS 尺寸铺满，内部按 dpr 放大
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redraw();
+  }
+
+  /* ========== 坐标 ========== */
+  function getPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    const pressure =
+      (typeof e.pressure === 'number' && e.pressure > 0 && e.pressure !== 0.5)
+        ? e.pressure
+        : null; // null 表示无压感，用速度算法
+    return {
+      x: e.clientX - r.left,
+      y: e.clientY - r.top,
+      pressure,
+      type: e.pointerType || 'touch',
+    };
+  }
+
+  /* ========== 渲染 ========== */
+  function renderStroke(s) {
+    const pts = s.points;
+    if (!pts.length) return;
+
+    ctx.save();
+    if (s.eraser) ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = s.color;
+    ctx.fillStyle = s.color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (pts.length === 1) {
+      const p = pts[0];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(p.w * 0.5, 0.6), 0, Math.PI * 2);
+      ctx.fill();
+      s.drawn = 1;
+      ctx.restore();
+      return;
+    }
+
+    let i = Math.max(1, s.drawn || 1);
+    for (; i < pts.length; i++) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      ctx.beginPath();
+      ctx.lineWidth = Math.max(0.5, (a.w + b.w) * 0.5);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    s.drawn = pts.length;
+    ctx.restore();
+  }
+
+  function redraw() {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    for (const s of strokes) { s.drawn = 0; renderStroke(s); }
+  }
+
+  /* ========== 笔锋核心：速度 → 粗细 ========== */
+  function addPoint(s, x, y, pressure, t) {
+    const last = s.points[s.points.length - 1];
+    const dx = x - last.x, dy = y - last.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.3) return;
+
+    const dt = Math.max(t - s.lastT, 1);
+    s.lastT = t;
+    const speed = dist / dt;                    // px/ms
+    s.speed = s.speed * 0.6 + speed * 0.4;      // 平滑
+
+    const base = s.size;
+    let target;
+
+    if (pressure !== null) {
+      // 有真压感（部分安卓 / 手写笔）：压力直接决定粗细
+      const p = Math.max(0.05, Math.min(1, pressure));
+      target = base * (0.3 + 1.3 * p);
+    } else {
+      // 手机手指：速度越快越细 —— 这就是笔锋
+      // 手机上手指移动速度快，阈值调大一些
+      const k = Math.min(s.speed / 2.2, 1);
+      target = base * (1 - 0.68 * k);
+    }
+
+    target = Math.max(target, base * 0.15);
+    target = Math.min(target, base * 1.55);
+
+    // 插值补点，让手指快速划过也顺滑
+    const step = 2.2;
+    const n = Math.max(1, Math.ceil(dist / step));
+    const startW = last.w;
+    const endW = startW + (target - startW) * 0.4;
+
+    for (let i = 1; i <= n; i++) {
+      const tt = i / n;
+      s.points.push({
+        x: last.x + dx * tt,
+        y: last.y + dy * tt,
+        w: startW + (endW - startW) * tt,
+      });
+    }
+  }
+
+  /* ========== 收笔出锋 ========== */
+  function finishStroke(s) {
+    const pts = s.points;
+    if (pts.length >= 2) {
+      const a = pts[pts.length - 2];
+      const b = pts[pts.length - 1];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      pts.push({
+        x: b.x + (dx / len) * 1.2,
+        y: b.y + (dy / len) * 1.2,
+        w: Math.max(b.w * 0.25, 0.4),
+      });
+    }
+    renderStroke(s);
+  }
+
+  /* ========== 触点管理 ========== */
+
+  // 多指时：如果第二根手指落下，结束当前笔画（避免画成一坨）
+  function startNewStroke(e) {
+    hint.classList.add('hide');
+
+    const p = getPoint(e);
+    const base = state.size;
+    // 触摸无真实压感时用基础宽度
+    const w0 = p.pressure !== null
+      ? base * (0.35 + 1.0 * p.pressure)
+      : base * 0.85;
+
+    drawing = true;
+    activePointerId = e.pointerId;
+
+    currentStroke = {
+      points: [{ x: p.x, y: p.y, w: w0 }],
+      color: state.color,
+      size: base,
+      eraser: state.tool === 'eraser',
+      drawn: 0,
+      lastT: performance.now(),
+      speed: 0,
+    };
+    strokes.push(currentStroke);
+    renderStroke(currentStroke);       // 立即可见
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  function cancelCurrentStroke() {
+    drawing = false;
+    activePointerId = null;
+    if (currentStroke) {
+      finishStroke(currentStroke);
+      currentStroke = null;
+    }
+  }
+
+  function onPointerDown(e) {
+    // 只处理主按钮 / 触摸
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    e.preventDefault();
+
+    // 记录触点，多指时忽略后续
+    activeTouches.add(e.pointerId);
+
+    if (activeTouches.size > 1) {
+      // 第二根手指落下 → 结束当前笔画，不再开新笔画
+      // 这样可以防止双指缩放/手掌误触把画布搞乱
+      if (drawing) cancelCurrentStroke();
+      return;
+    }
+
+    startNewStroke(e);
+  }
+
+  function onPointerMove(e) {
+    if (!drawing || !currentStroke) return;
+    if (e.pointerId !== activePointerId) return;  // 只跟踪自己的那根手指
+    e.preventDefault();
+
+    const p = getPoint(e);
+    addPoint(currentStroke, p.x, p.y, p.pressure, performance.now());
+    renderStroke(currentStroke);
+  }
+
+  function onPointerUp(e) {
+    activeTouches.delete(e.pointerId);
+
+    if (e.pointerId !== activePointerId) return;
+    cancelCurrentStroke();
+    try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+  }
+
+  function onPointerCancel(e) {
+    activeTouches.delete(e.pointerId);
+    if (e.pointerId === activePointerId) cancelCurrentStroke();
+  }
+
+  // pointerdown 绑 canvas；move/up 绑 window（手指滑出画布也不丢）
+  canvas.addEventListener('pointerdown', onPointerDown, { passive: false });
+  window.addEventListener('pointermove', onPointerMove, { passive: false });
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerCancel);
+
+  /* ========== 额外保险：阻止 touch 默认行为 ========== */
+  // 某些老安卓浏览器 pointer 事件支持不完整，加一层 touch 屏蔽
+  function preventDefault(e) {
+    if (e.cancelable) e.preventDefault();
+  }
+  // 画布上阻止所有触摸默认行为（滚动、缩放、长按）
+  canvas.addEventListener('touchstart', preventDefault, { passive: false });
+  canvas.addEventListener('touchmove',  preventDefault, { passive: false });
+  canvas.addEventListener('touchend',   preventDefault, { passive: false });
+  canvas.addEventListener('touchcancel',preventDefault, { passive: false });
+
+  // 禁用双指缩放（iOS Safari 有时仍会生效，用 gesture 事件兜底）
+  document.addEventListener('gesturestart', preventDefault, { passive: false });
+  document.addEventListener('gesturechange', preventDefault, { passive: false });
+  document.addEventListener('gestureend', preventDefault, { passive: false });
+
+  // 阻止页面滚动和下拉刷新
+  document.addEventListener('touchmove', (e) => {
+    if (e.target === canvas) return; // canvas 自己的已在上面处理
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+
+  canvas.addEventListener('contextmenu', preventDefault);
+
+  /* ========== 工具栏 ========== */
+  const COLORS = ['#1a1a1a', '#5c5c5c', '#e5484d', '#f5a524', '#30a46c', '#0090ff', '#8e4ec6', '#ff5c8a'];
+  const swatchBox = document.getElementById('swatches');
+  COLORS.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'swatch' + (i === 0 ? ' active' : '');
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener('click', () => {
+      state.color = c;
+      state.tool = 'pen';
+      syncTool();
+      document.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
+      b.classList.add('active');
+    });
+    swatchBox.appendChild(b);
+  });
+
+  const sizeInput = document.getElementById('size');
+  sizeInput.addEventListener('input', () => {
+    state.size = Number(sizeInput.value);
+  });
+
+  const penBtn = document.getElementById('penBtn');
+  const eraserBtn = document.getElementById('eraserBtn');
+  function syncTool() {
+    penBtn.classList.toggle('active', state.tool === 'pen');
+    eraserBtn.classList.toggle('active', state.tool === 'eraser');
+    canvas.style.cursor = state.tool === 'eraser' ? 'cell' : 'crosshair';
+  }
+  penBtn.addEventListener('click', () => { state.tool = 'pen'; syncTool(); });
+  eraserBtn.addEventListener('click', () => { state.tool = 'eraser'; syncTool(); });
+
+  document.getElementById('undoBtn').addEventListener('click', () => {
+    if (!strokes.length) return;
+    strokes.pop();
+    redraw();
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    if (!strokes.length) return;
+    strokes = [];
+    redraw();
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const tmp = document.createElement('canvas');
+    tmp.width = canvas.width;
+    tmp.height = canvas.height;
+    const tctx = tmp.getContext('2d');
+    tctx.fillStyle = '#ffffff';
+    tctx.fillRect(0, 0, tmp.width, tmp.height);
+    tctx.drawImage(canvas, 0, 0);
+
+    const a = document.createElement('a');
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    a.download = `手写_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.png`;
+    a.href = tmp.toDataURL('image/png');
+    a.click();
+  });
+
+  /* ========== 窗口 / 视口变化 ========== */
+  let rt = null;
+  function scheduleResize() {
+    clearTimeout(rt);
+    rt = setTimeout(resize, 150);
+  }
+  window.addEventListener('resize', scheduleResize);
+  window.addEventListener('orientationchange', scheduleResize);
+
+  // 手机上地址栏收起/展开时 innerHeight 会变，用 visualViewport 兜底
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleResize);
+  }
+
+  /* ========== 启动 ========== */
+  requestAnimationFrame(() => {
+    resize();
+    syncTool();
+  });
+})();
+</script>
+</body>
+</html>
