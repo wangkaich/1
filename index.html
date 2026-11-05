@@ -23,7 +23,7 @@
     inset: 0;
     display: grid;
     place-items: center;
-    padding-bottom: 10vh; /* 整体微微上移，留出底部提示空间 */
+    padding-bottom: 8vh; /* 整体微微上移 */
   }
 
   svg {
@@ -31,21 +31,17 @@
     height: auto;
     display: block;
     overflow: visible;
-    /* 蓝色霓虹发光 */
+    /* 极简发光，减轻手机 GPU 负担 */
     filter:
-      drop-shadow(0 0 3px  rgba(120, 235, 255, .95))
-      drop-shadow(0 0 10px rgba(60, 190, 255, .75))
-      drop-shadow(0 0 26px rgba(30, 130, 255, .45))
-      drop-shadow(0 0 60px rgba(20, 90, 220, .30));
-    transition: filter .25s ease;
+      drop-shadow(0 0 4px rgba(120, 235, 255, 0.9))
+      drop-shadow(0 0 15px rgba(60, 190, 255, 0.6));
+    transition: filter .2s ease;
   }
 
   svg.pressing {
     filter:
-      drop-shadow(0 0 5px  rgba(190, 250, 255, 1))
-      drop-shadow(0 0 16px rgba(80, 210, 255, .95))
-      drop-shadow(0 0 40px rgba(40, 150, 255, .65))
-      drop-shadow(0 0 90px rgba(20, 90, 220, .45));
+      drop-shadow(0 0 6px rgba(190, 250, 255, 1))
+      drop-shadow(0 0 22px rgba(80, 210, 255, 0.8));
   }
 
   #hint {
@@ -55,29 +51,24 @@
     text-align: center;
     font-size: 14px;
     letter-spacing: .08em;
-    color: rgba(90, 200, 240, .65);
+    color: rgba(90, 200, 240, 0.7);
     pointer-events: none;
     animation: fade 4s ease-in-out infinite;
     z-index: 10;
-    padding: 0 20px;
   }
   @keyframes fade {
     0%, 100% { opacity: .4; }
     50%      { opacity: 1; }
   }
 
-  /* 零食样式 */
   .food-item {
     cursor: grab;
     pointer-events: all;
   }
-  .food-item:active {
-    cursor: grabbing;
-  }
   .food-item path {
     fill: none;
     stroke: #5FE3FF;
-    stroke-width: 3.5;
+    stroke-width: 4;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
@@ -92,19 +83,6 @@
         <rect width="100%" height="100%" fill="white" />
         <ellipse cx="200" cy="190" rx="82" ry="77" fill="black" />
       </mask>
-
-      <filter id="furLight" x="-25%" y="-25%" width="150%" height="150%">
-        <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="5" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-      <filter id="fur" x="-28%" y="-28%" width="156%" height="156%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="7" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.9" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-      <filter id="furStrong" x="-32%" y="-32%" width="164%" height="164%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" seed="3" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.8" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
     </defs>
 
     <g id="cat">
@@ -112,74 +90,63 @@
 
       <g id="tail-group">
         <path id="tail" d="M 128 285 C 80 300, 50 260, 80 220 C 95 200, 110 205, 105 220 C 100 235, 100 260, 125 265" 
-              fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" filter="url(#fur)"/>
+              fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round"/>
       </g>
 
       <g id="body">
         <path d="M 130 260 C 100 330 130 360 200 360 C 270 360 300 330 270 260" 
-              fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" filter="url(#fur)"/>
+              fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round"/>
       </g>
 
       <g id="head">
         <g id="earL" mask="url(#earMask)">
           <path d="M 150 190 L 115 75 C 115 65, 125 65, 130 75 L 185 160 Z"
-                fill="none" stroke="#5FE3FF" stroke-width="6"
-                stroke-dasharray="1.5 3.5" opacity="0.28"
-                stroke-linejoin="round" filter="url(#furStrong)"/>
-          <path d="M 150 190 L 115 75 C 115 65, 125 65, 130 75 L 185 160 Z"
-                fill="none" stroke="#5FE3FF" stroke-width="5"
-                stroke-linejoin="round" filter="url(#fur)"/>
+                fill="none" stroke="#5FE3FF" stroke-width="5.5" stroke-linejoin="round"/>
         </g>
 
         <g id="earR" mask="url(#earMask)">
           <path d="M 250 190 L 285 75 C 285 65, 275 65, 270 75 L 215 160 Z"
-                fill="none" stroke="#5FE3FF" stroke-width="6"
-                stroke-dasharray="1.5 3.5" opacity="0.28"
-                stroke-linejoin="round" filter="url(#furStrong)"/>
-          <path d="M 250 190 L 285 75 C 285 65, 275 65, 270 75 L 215 160 Z"
-                fill="none" stroke="#5FE3FF" stroke-width="5"
-                stroke-linejoin="round" filter="url(#fur)"/>
+                fill="none" stroke="#5FE3FF" stroke-width="5.5" stroke-linejoin="round"/>
         </g>
 
-        <ellipse cx="200" cy="190" rx="85" ry="80" fill="none" stroke="#5FE3FF" stroke-width="5" filter="url(#fur)"/>
+        <ellipse cx="200" cy="190" rx="85" ry="80" fill="none" stroke="#5FE3FF" stroke-width="5.5"/>
 
         <ellipse class="blush" cx="120" cy="210" rx="20" ry="12" fill="#2EA8FF" opacity="0.16"/>
         <ellipse class="blush" cx="280" cy="210" rx="20" ry="12" fill="#2EA8FF" opacity="0.16"/>
 
-        <g id="whiskerL" stroke="#5FE3FF" stroke-width="4.5" stroke-linecap="round" filter="url(#furStrong)" opacity="0.75">
+        <g id="whiskerL" stroke="#5FE3FF" stroke-width="4.5" stroke-linecap="round" opacity="0.85">
           <path d="M 112 185 Q 85 175 60 182" fill="none"/>
           <path d="M 112 200 Q 85 200 60 208" fill="none"/>
         </g>
         
-        <g id="whiskerR" stroke="#5FE3FF" stroke-width="4.5" stroke-linecap="round" filter="url(#furStrong)" opacity="0.75">
+        <g id="whiskerR" stroke="#5FE3FF" stroke-width="4.5" stroke-linecap="round" opacity="0.85">
           <path d="M 288 185 Q 315 175 340 182" fill="none"/>
           <path d="M 288 200 Q 315 200 340 208" fill="none"/>
         </g>
 
-        <g id="mouth-normal" fill="none" stroke="#5FE3FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" filter="url(#furLight)">
+        <g id="mouth-normal" fill="none" stroke="#5FE3FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M 185 210 Q 192.5 220 200 210 Q 207.5 220 215 210"/>
         </g>
-        <g id="mouth-happy" fill="none" stroke="#5FE3FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0" filter="url(#furLight)">
+        <g id="mouth-happy" fill="none" stroke="#5FE3FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0">
           <path d="M 183 205 Q 191.5 218 200 206 Q 208.5 218 217 205"/>
         </g>
 
         <g class="eye" data-cx="155" data-cy="185" transform="translate(155,185)">
-          <circle class="open-eye" cx="0" cy="0" r="13" fill="#5FE3FF" filter="url(#furLight)"/>
+          <circle class="open-eye" cx="0" cy="0" r="13" fill="#5FE3FF"/>
           <path class="closed-eye" d="M -15 3 Q 0 -12 15 3" 
-                fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" opacity="0" filter="url(#furLight)"/>
+                fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" opacity="0"/>
         </g>
 
         <g class="eye" data-cx="245" data-cy="185" transform="translate(245,185)">
-          <circle class="open-eye" cx="0" cy="0" r="13" fill="#5FE3FF" filter="url(#furLight)"/>
+          <circle class="open-eye" cx="0" cy="0" r="13" fill="#5FE3FF"/>
           <path class="closed-eye" d="M -15 3 Q 0 -12 15 3" 
-                fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" opacity="0" filter="url(#furLight)"/>
+                fill="none" stroke="#5FE3FF" stroke-width="6" stroke-linecap="round" opacity="0"/>
         </g>
       </g>
 
       <g id="hearts-container"></g>
     </g>
 
-    <!-- 食物图层 -->
     <g id="food-layer"></g>
   </svg>
 </div>
@@ -206,31 +173,25 @@
   const CX = 200, CY = 190;      
   const MOUTH_X = 200, MOUTH_Y = 210; 
   const MAX_OFFSET = 20;          
-
   const EAR_L_PIVOT = { x: 150, y: 190 };
   const EAR_R_PIVOT = { x: 250, y: 190 };
 
-  /* ---------- 食物生成库（添加透明热区方便触摸） ---------- */
   const FOOD_TEMPLATES = [
-    `<circle r="25" fill="transparent"/><path d="M -15 0 L 10 -8 L 15 0 L 10 8 Z M 15 0 L 22 -6 M 15 0 L 22 6 M 10 -8 L 5 -12 M 10 8 L 5 12" />`,
-    `<circle r="25" fill="transparent"/><path d="M -15 -5 L 15 -5 M -15 5 L 15 5 M -15 -5 A 5 5 0 1 1 -15 5 M 15 -5 A 5 5 0 1 0 15 5" />`,
-    `<circle r="25" fill="transparent"/><path d="M 0 -12 L 15 10 L -15 10 Z M 0 -12 L -5 10 M 0 -12 L 5 10" />`,
-    `<circle r="25" fill="transparent"/><path d="M 0 5 C -10 -5 -20 0 -10 10 L 0 18 L 10 10 C 20 0 10 -5 0 5 Z" />`
+    `<circle r="30" fill="transparent"/><path d="M -15 0 L 10 -8 L 15 0 L 10 8 Z M 15 0 L 22 -6 M 15 0 L 22 6 M 10 -8 L 5 -12 M 10 8 L 5 12" />`,
+    `<circle r="30" fill="transparent"/><path d="M -15 -5 L 15 -5 M -15 5 L 15 5 M -15 -5 A 5 5 0 1 1 -15 5 M 15 -5 A 5 5 0 1 0 15 5" />`,
+    `<circle r="30" fill="transparent"/><path d="M 0 -12 L 15 10 L -15 10 Z M 0 -12 L -5 10 M 0 -12 L 5 10" />`,
+    `<circle r="30" fill="transparent"/><path d="M 0 5 C -10 -5 -20 0 -10 10 L 0 18 L 10 10 C 20 0 10 -5 0 5 Z" />`
   ];
 
-  /* ---------- 物理与状态 ---------- */
   let holding = false;
   let happy = 0;
-  
   let isEating = false;
   let eatTimer = 0;
 
   let pulledX = 0, pulledY = 0;
   let pullTX = 0, pullTY = 0;
   let pullXVel = 0, pullYVel = 0;
-
   let tilt = 0, tiltVel = 0, tiltTarget = 0;
-
   let squashX = 1, squashY = 1;
   let targetSquashX = 1, targetSquashY = 1;
   let squashXVel = 0, squashYVel = 0;
@@ -240,10 +201,9 @@
   let blinkMin = 0.06;
   let nextBlink = performance.now() + 2500 + Math.random() * 2000;
 
-  /* ---------- 拖拽相关 ---------- */
   let draggingFood = null;
   let dragOffsetX = 0, dragOffsetY = 0;
-  const TOUCH_LIFT = 50; // 触摸时食物向上偏移，避免手指挡住
+  const TOUCH_LIFT = 50;
 
   const pointer = { x: 200, y: 200 };
   const probe = new DOMPoint();
@@ -256,53 +216,36 @@
     return probe.matrixTransform(m.inverse());
   }
 
-  /* ---------- 生成食物 ---------- */
   function spawnFood(x, y) {
     if (Math.hypot(x - CX, y - CY) < 120) return;
-
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     g.setAttribute('class', 'food-item');
-    
-    // 限制生成范围不要太靠边，不然手机屏幕摸不到
     x = Math.max(40, Math.min(360, x));
     y = Math.max(40, Math.min(360, y));
-
     g.setAttribute('transform', `translate(${x}, ${y})`);
-    
-    const template = FOOD_TEMPLATES[Math.floor(Math.random() * FOOD_TEMPLATES.length)];
-    g.innerHTML = template;
-
+    g.innerHTML = FOOD_TEMPLATES[Math.floor(Math.random() * FOOD_TEMPLATES.length)];
     g.dataset.x = x;
     g.dataset.y = y;
     foodLayer.appendChild(g);
   }
 
-  /* ---------- 事件处理 ---------- */
   window.addEventListener('pointerdown', function (e) {
-    // 阻止默认行为（防止滑动页面）
     if (e.cancelable) e.preventDefault();
-
     const p = getSVGPoint(e.clientX, e.clientY);
     pointer.x = p.x;
     pointer.y = p.y;
 
-    // 1. 点中食物
     const foodEl = e.target.closest('.food-item');
     if (foodEl) {
       draggingFood = foodEl;
-      
-      // 如果是触摸屏，让食物悬浮在手指上方
       const isTouch = e.pointerType === 'touch';
       const liftY = isTouch ? TOUCH_LIFT : 0;
-
       dragOffsetX = parseFloat(foodEl.dataset.x) - p.x;
       dragOffsetY = parseFloat(foodEl.dataset.y) - (p.y - liftY);
-      
       foodLayer.appendChild(foodEl);
       return; 
     }
 
-    // 2. 点中猫猫
     if (Math.hypot(p.x - CX, p.y - CY) < 120) {
       if (!holding) {
         holding = true;
@@ -313,26 +256,21 @@
       return;
     }
 
-    // 3. 点中空白处，生成食物
     spawnFood(p.x, p.y);
   }, { passive: false });
 
   window.addEventListener('pointermove', function (e) {
     if (e.cancelable) e.preventDefault();
-    
     const p = getSVGPoint(e.clientX, e.clientY);
     
     if (draggingFood) {
       const isTouch = e.pointerType === 'touch';
       const liftY = isTouch ? TOUCH_LIFT : 0;
-
       const fx = p.x + dragOffsetX;
       const fy = (p.y - liftY) + dragOffsetY;
-      
       draggingFood.setAttribute('transform', `translate(${fx}, ${fy})`);
       draggingFood.dataset.x = fx;
       draggingFood.dataset.y = fy;
-      
       pointer.x = fx;
       pointer.y = fy;
     } else {
@@ -343,7 +281,6 @@
 
   window.addEventListener('pointerup', function (e) {
     if (e.cancelable) e.preventDefault();
-
     if (holding) {
       holding = false;
       svg.classList.remove('pressing');
@@ -352,8 +289,6 @@
     if (draggingFood) {
       const fx = parseFloat(draggingFood.dataset.x);
       const fy = parseFloat(draggingFood.dataset.y);
-      
-      // 触摸端加大判定范围，更容易喂进嘴里
       const distToMouth = Math.hypot(fx - MOUTH_X, fy - MOUTH_Y);
       const eatRadius = e.pointerType === 'touch' ? 85 : 65;
 
@@ -373,17 +308,17 @@
     draggingFood = null;
   }, { passive: true });
 
-  /* ---------- 触发吃掉 ---------- */
   function triggerEat() {
     isEating = true;
     eatTimer = 2500; 
-    for (let i=0; i<10; i++) {
-      spawnHeart();
-    }
+    for (let i=0; i<6; i++) spawnHeart();
   }
 
-  /* ---------- 爱心系统 ---------- */
+  // 优化爱心生成，减少 DOM 压力
   function spawnHeart() {
+    // 限制最大爱心数量，防止手机卡顿
+    if (heartsContainer.childElementCount > 20) return; 
+
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     el.innerHTML = `<path d="M 0 0 C -6 -8 -18 -4 -18 6 C -18 16 0 26 0 26 C 0 26 18 16 18 6 C 18 -4 6 -8 0 0 Z" fill="#5FE3FF"/>`;
     el.dataset.life = 1;
@@ -394,7 +329,6 @@
     heartsContainer.appendChild(el);
   }
 
-  /* ---------- 物理计算 ---------- */
   function computePull() {
     if (!holding && !isEating) { 
       pullTX = 0; pullTY = 0; 
@@ -407,22 +341,13 @@
       const dx = pointer.x - CX;
       const dy = pointer.y - CY;
       const dist = Math.hypot(dx, dy) || 1;
-      
       let pressFactor = dist < 120 ? (120 - dist) / 120 : 0;
-      if (dy < -20 && Math.abs(dx) < 80) {
-        pressFactor = Math.max(pressFactor, 0.85);
-      }
-
+      if (dy < -20 && Math.abs(dx) < 80) pressFactor = Math.max(pressFactor, 0.85);
       pullTX = dx * 0.35 * pressFactor;
       pullTY = dy * 0.35 * pressFactor;
-
-      if (dy < -10) {
-        pullTY += Math.abs(dy) * 0.45 * pressFactor;
-      }
-
+      if (dy < -10) pullTY += Math.abs(dy) * 0.45 * pressFactor;
       tiltTarget = (pointer.x - CX) * 0.08;
       tiltTarget = Math.max(-10, Math.min(10, tiltTarget)); 
-
       targetSquashY = 1 - 0.18 * pressFactor;
       targetSquashX = 1 + 0.10 * pressFactor;
     } else if (isEating) {
@@ -434,7 +359,6 @@
 
   let lastTime = performance.now();
 
-  /* ---------- 主循环 ---------- */
   function frame(now) {
     const timeDiff = now - lastTime;
     const dt = Math.min(Math.max(timeDiff / 16.667, 0.4), 2.2);
@@ -493,7 +417,6 @@
     squashX += squashXVel * dt;
 
     const breathY = Math.sin(now / 400) * 1 * (1 - happy);
-
     const tx = pulledX;
     const ty = pulledY + breathY;
 
@@ -533,13 +456,11 @@
     for (let i = 0; i < 2; i++) {
       const sign = i === 0 ? -1 : 1;
       const press = 45 * happy + (isEating ? Math.sin(now/40)*5 : 0);
-      
       let sideBias = 0;
       if (holding) {
         const sideDir = (pointer.x > CX) ? 1 : -1;
         sideBias = sign * sideDir * 10 * happy;
       }
-
       const tremble = Math.sin(now / 45) * 3 * happy;
       const target = sign * press + sideBias + tremble + Math.sin(now / 840 + i*0.9)*2.6*(1-happy);
 
@@ -558,9 +479,7 @@
 
       const pivot = i === 0 ? EAR_L_PIVOT : EAR_R_PIVOT;
       const earEl = i === 0 ? earL : earR;
-
-      earEl.setAttribute('transform',
-        'rotate(' + ang.toFixed(2) + ' ' + pivot.x + ' ' + pivot.y + ')');
+      earEl.setAttribute('transform', 'rotate(' + ang.toFixed(2) + ' ' + pivot.x + ' ' + pivot.y + ')');
     }
 
     const eyes = document.querySelectorAll('.eye');
@@ -574,13 +493,10 @@
       const microX = Math.sin(now / 2100 + i) * 2 + Math.sin(now / 720 + i*2) * 0.8;
       const microY = Math.cos(now / 1750 + i) * 1.5 + Math.cos(now / 880 + i) * 0.5;
 
-      const targetX = pointer.x;
-      const targetY = pointer.y;
-
       const ex = eyeCX + tx;
       const ey = eyeCY + ty;
-      const dx = targetX - ex;
-      const dy = targetY - ey;
+      const dx = pointer.x - ex;
+      const dy = pointer.y - ey;
       const dist = Math.hypot(dx, dy) || 1;
       const k = Math.min(dist / 90, 1); 
 
@@ -598,8 +514,7 @@
       const finalClosedOp = 1 - finalOpenOp;
 
       const eyeSquashY = 1 - (1 - blinkScale) * 0.6; 
-      open.setAttribute('transform',
-        'translate(' + px.toFixed(2) + ',' + py.toFixed(2) + ') scale(1,' + eyeSquashY.toFixed(2) + ')');
+      open.setAttribute('transform', 'translate(' + px.toFixed(2) + ',' + py.toFixed(2) + ') scale(1,' + eyeSquashY.toFixed(2) + ')');
       open.setAttribute('opacity', finalOpenOp.toFixed(3));
 
       closed.setAttribute('transform', 'translate(0,' + (Math.sin(now/95)*1.5*happy).toFixed(2) + ')');
